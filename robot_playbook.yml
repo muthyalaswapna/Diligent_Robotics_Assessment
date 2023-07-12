@@ -1,0 +1,28 @@
+# ansible/robot_playbook.yml
+
+- name: Configure Robot                           # Playbook to configure the robot
+  hosts: robot                                    # Target hosts group representing the robots
+  gather_facts: true                              # Gather facts about the target hosts
+
+  tasks:
+    - name: Ensure required packages are installed # Task to ensure specific packages are installed on the robot
+      apt:
+        name: "{{ item }}"                        # Package name
+        state: present                             # Ensure the package is present
+      with_items:
+        - package1
+        - package2
+        - package3
+
+    - name: Copy configuration file                # Task to copy the configuration file to the robot
+      copy:
+        src: config/robot.conf                     # Source path of the configuration file
+        dest: /etc/robot/robot.conf                # Destination path on the robot
+        owner: root                                # Owner of the file
+        group: root                                # Group of the file
+        mode: 0644                                 # Permissions of the file
+
+    - name: Restart robot service                  # Task to restart the robot service
+      service:
+        name: robot-service                        # Name of the robot service
+        state: restarted                           # Restart the service
