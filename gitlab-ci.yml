@@ -1,0 +1,61 @@
+# .gitlab-ci.yml
+
+# Define the stages of the CI/CD pipeline
+stages:
+  - build
+  - test
+  - deploy
+
+# Define variables that can be used throughout the pipeline
+variables:
+  ENVIRONMENT: "production"
+  ROBOT_PLAYBOOK: "ansible/robot_playbook.yml"                 # Path to the Ansible playbook for the robot
+  INFRASTRUCTURE_PLAYBOOK: "ansible/infrastructure_playbook.yml"   # Path to the Ansible playbook for cloud infrastructure
+
+# Set up any necessary dependencies or environment configuration before executing jobs
+before_script:
+  - apt-get update
+  - apt-get install -y ansible
+
+# Build Stage: Build the application
+build:
+  stage: build
+  script:
+    - echo "Building the application..."
+    - ./gradlew build
+
+# Test Stage: Run tests
+test:
+  stage: test
+  script:
+    - echo "Running tests..."
+    - ./gradlew test
+
+# Deploy Stage for Roaming/Mobile Robot
+deploy_robot:
+  stage: deploy
+  script:
+    - echo "Deploying to robot..."
+    - ansible-playbook $ROBOT_PLAYBOOK   # Execute the Ansible playbook for the robot
+
+# Deploy Stage for Cloud Infrastructure
+deploy_infrastructure:
+  stage: deploy
+  script:
+    - echo "Deploying to AWS..."
+    - ansible-playbook $INFRASTRUCTURE_PLAYBOOK   # Execute the Ansible playbook for cloud infrastructure
+
+# Rollback Stage: Rollback to previous version
+rollback:
+  stage: deploy
+  script:
+    - echo "Rolling back to previous version..."
+    - ansible-playbook $ROBOT_PLAYBOOK --tags rollback   # Execute the Ansible playbook with a rollback tag
+
+# Security and Compliance Stage: Run security scans and compliance checks
+security_and_compliance:
+  stage: test
+  script:
+    - echo "Running security scans and compliance checks..."
+    - sonar-scanner   # Run SonarQube security scan
+    - snyk test       # Run Snyk vulnerability scan
